@@ -1,11 +1,483 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班主任模拟器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 主菜单 -->
+    <div id="menuScreen">
+        <canvas id="menuBg"></canvas>
+
+        <!-- 左侧：标题 -->
+        <div class="menu-left">
+            <h1 class="menu-title">班主任<br>模拟器</h1>
+        </div>
+
+        <!-- 右侧：设置表单 -->
+        <div class="menu-right">
+            <div class="form-heading">开始新游戏</div>
+            <form class="menu-form" id="gameSetupForm">
+                <div class="form-group">
+                    <label for="difficulty">游戏难度</label>
+                    <select id="difficulty" required>
+                        <option value="Easy">简单 — 学生起点高，成长快</option>
+                        <option value="Normal" selected>普通 — 标准体验</option>
+                        <option value="Hard">困难 — 学生起点低，压力极大</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="classType">班型</label>
+                    <select id="classType" required>
+                        <option value="Science" selected>理科班 — 理化生</option>
+                        <option value="Art">文科班 — 政史地</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="studentCount">学生人数</label>
+                    <select id="studentCount" required>
+                        <option value="18">18人</option>
+                        <option value="27">27人</option>
+                        <option value="36">36人</option>
+                        <option value="45" selected>45人</option>
+                        <option value="54">54人</option>
+                    </select>
+                </div>
+                <button type="submit" class="start-btn">开 始 游 戏</button>
+            </form>
+
+            <!-- 导入存档 -->
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div class="form-heading" style="margin-bottom: 15px;">导入存档</div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="file" id="loadGameInputMenu" accept=".json" style="display: none;">
+                    <button class="btn" id="loadGameBtnMenu" style="flex: 1; padding: 12px;" data-tooltip="选择之前保存的存档文件（.json）恢复游戏进度">📂 选择存档文件</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-footer">班主任模拟器 v1.0 &nbsp;·&nbsp; 按 Space 推进周数</div>
+    </div>
+
+    <!-- 角色选择界面 -->
+    <div id="characterSelectScreen">
+        <canvas id="characterBg"></canvas>
+        <div class="character-container">
+            <h2 class="character-title">请选择你的英雄</h2>
+            <div class="character-cards">
+                <div class="character-card" data-character="wei">
+                    <div class="character-icon">⚛️</div>
+                    <h3 class="character-name">魏教授</h3>
+                    <div class="character-subject">物理老师</div>
+                    <div class="character-trait">
+                        <div class="trait-title">半步年级长</div>
+                        <div class="trait-desc">工资增加到每月1700，学生死亡不会扣除工资</div>
+                    </div>
+                </div>
+                <div class="character-card" data-character="wang">
+                    <div class="character-icon">🧪</div>
+                    <h3 class="character-name">王老师</h3>
+                    <div class="character-subject">化学老师</div>
+                    <div class="character-trait">
+                        <div class="trait-title">劳模体质</div>
+                        <div class="trait-desc">班主任精力最大值提升至140，每回合回复到140</div>
+                    </div>
+                </div>
+                <div class="character-card" data-character="qin">
+                    <div class="character-icon">📐</div>
+                    <h3 class="character-name">秦老师</h3>
+                    <div class="character-subject">数学老师</div>
+                    <div class="character-trait">
+                        <div class="trait-title">装糖阴他们一手</div>
+                        <div class="trait-desc">每回合30%概率复活一个精力归0（死亡）学生，恢复其精力至70</div>
+                    </div>
+                </div>
+            </div>
+            <div class="character-note">所有角色会略微提升所有学生在他们所教科目的成绩</div>
+        </div>
+    </div>
+
+    <!-- 游戏界面 -->
+    <div id="gameScreen">
+        <!-- 状态栏 -->
+        <div id="statusBar">
+            <div class="status-item">
+                <span>周数</span>
+                <div class="status-value" id="weekDisplay">0</div>
+            </div>
+            <div class="status-item">
+                <span>角色</span>
+                <div class="status-value" id="characterDisplay">-</div>
+            </div>
+            <div class="status-item">
+                <span>距离考试</span>
+                <div class="status-value" id="nextExamDisplay">-</div>
+            </div>
+            <div class="status-item">
+                <span>精力</span>
+                <div class="status-value" id="energyDisplay">100</div>
+            </div>
+            <div class="status-item">
+                <span>工资</span>
+                <div class="status-value" id="salaryDisplay">0</div>
+            </div>
+            <div class="status-item">
+                <span>血量</span>
+                <div class="status-value" id="healthDisplay">10</div>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <!-- 左侧栏：日志和信息 -->
+            <div class="left-panel">
+                <!-- 日志栏 -->
+                <div id="logPanel"></div>
+                <!-- 学生详细信息 -->
+                <div id="infoPanel"></div>
+            </div>
+
+            <!-- 中间座位表 -->
+            <div id="seatingArea">
+                <div class="seating-controls">
+                    <div class="view-mode-buttons">
+                        <span class="view-mode-label">显示模式：</span>
+                        <button class="btn view-mode-btn active" id="normalModeBtn" data-mode="normal">普通模式</button>
+                        <button class="btn view-mode-btn" id="relationModeBtn" data-mode="relation">关系模式</button>
+                        <button class="btn view-mode-btn" id="statusModeBtn" data-mode="status">状态模式</button>
+                        <button class="btn view-mode-btn" id="competitionModeBtn" data-mode="competition">竞赛模式</button>
+                    </div>
+                    <button class="btn btn-danger" id="cancelModeBtn" style="display: none;">取消</button>
+                </div>
+                <div class="seating-grid" id="seatingGrid"></div>
+            </div>
+
+            <!-- 控制台 -->
+            <div id="controlPanel">
+                <div class="control-section">
+                    <h3>时间控制</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-success" id="nextWeekBtn" data-tooltip="推进到下一周，触发各种事件">下一周 (Space)</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>学生操作</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-danger" id="expelBtn" disabled data-tooltip="劝退表现差的学生，但会降低班级士气">劝退学生</button>
+                        <button class="btn" id="counselBtn" disabled data-tooltip="消耗20精力，提升学生积极性">约谈学生</button>
+                        <button class="btn" id="treatSingleBtn" disabled data-tooltip="消耗350元，恢复学生30精力，提升5积极性">请学生吃饭</button>
+                        <button class="btn" id="treatClassBtn" disabled data-tooltip="消耗2000元，每人恢复5精力，提升3积极性">请全班吃饭</button>
+                        <button class="btn" id="reformBtn" disabled data-tooltip="消耗300元、30精力，80%概率重置学生天赋">调教</button>
+                        <button class="btn btn-danger" id="sellBtn" disabled data-tooltip="消耗40精力，40%概率贩卖成功（学生死亡，获得1500元，传奇机长学生只获得200元），60%概率失败（学生殴打班主任，扣7血量）">贩卖</button>
+                        <button class="btn" id="swapSeatsBtn" disabled data-tooltip="先选一个学生，再点击目标位置（可以是空座位）进行交换">交换座位</button>
+                        <button class="btn" id="randomizeSeatsBtn" data-tooltip="随机重新排列所有学生座位">随机重排</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>班级管理</h3>
+                    <div class="btn-group">
+                        <div class="activity-selector">
+                            <button class="btn" id="organizeActivityBtn" data-tooltip="选择活动类型后点击组织">组织活动</button>
+                            <select id="activityTypeSelect" data-tooltip="选择要组织的活动类型">
+                                <option value="SPORTS">🏃‍♂️ 运动会</option>
+                                <option value="MOVIE">🎬 看电影</option>
+                                <option value="FIELD_TRIP">🌸 春游踏青</option>
+                                <option value="TALENT_SHOW">🎤 才艺展示</option>
+                                <option value="GROUP_STUDY">📚 集体自习</option>
+                                <option value="PICNIC">🧺 野餐聚会</option>
+                                <option value="GAME_NIGHT">🎮 游戏之夜</option>
+                                <option value="VOLUNTEER">🤝 志愿服务</option>
+                            </select>
+                        </div>
+                        <div class="meeting-selector">
+                            <button class="btn" id="holdMeetingBtn" data-tooltip="选择班会类型后点击召开">召开班会</button>
+                            <select id="meetingTypeSelect" data-tooltip="选择要召开的班会类型">
+                                <option value="CHICKEN_SOUP">🍲 鸡汤班会</option>
+                                <option value="THREAT">😠 恐吓班会</option>
+                                <option value="AWARD">🏆 表彰班会</option>
+                                <option value="FREE">🎲 自由班会</option>
+                                <option value="COMPLAINT">💬 吐槽大会</option>
+                                <option value="SURPRISE">🎁 惊喜班会</option>
+                            </select>
+                        </div>
+                        <button class="btn" id="instigateBtn" disabled data-tooltip="消耗40精力，50%概率破坏两个学生的关系（变为仇恨），50%概率失败（被学生殴打，扣血量）">挑拨离间</button>
+                        <button class="btn" id="buyMedicineBtn" data-tooltip="消耗500元，恢复5点血量">购买药品</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>请假管理</h3>
+                    <div class="btn-group">
+                        <button class="btn" id="showLeavesBtn" data-tooltip="查看并处理学生请假申请">查看请假</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>考试记录</h3>
+                    <div class="exam-history" id="examHistory"></div>
+                </div>
+
+                <div class="control-section">
+                    <h3>存档管理</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-success" id="saveGameBtn" data-tooltip="保存当前游戏进度到本地">保存存档</button>
+                    </div>
+                </div>
+
+                <!-- 临时调试按钮 -->
+                <div class="control-section" style="background: rgba(232, 199, 106, 0.1); border: 1px dashed #e8c76a;">
+                    <h3 style="color: #e8c76a;">🔧 临时调试</h3>
+                    <div class="btn-group">
+                        <button class="btn" onclick="openSportsDayEvent()" style="background: #e8c76a; color: #0d1117;">🏆 打开运动会</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 信息显示栏 -->
+        <div id="infoPanel"></div>
+    </div>
+
+    <!-- 过场遮罩 -->
+    <div id="transitionOverlay">
+        <div class="transition-text" id="transitionText"></div>
+    </div>
+
+    <!-- 结算画面 -->
+    <div id="endGameScreen">
+        <div class="end-wrap">
+            <div class="end-header">
+                <div class="end-reason-badge" id="endReasonBadge">游戏结束</div>
+                <div class="end-title" id="endTitle">游戏结束</div>
+                <div class="end-eval-line" id="endEvalLine"></div>
+            </div>
+
+            <!-- 教学评价 -->
+            <div class="end-eval-box" id="endEvalBox">
+                <div class="end-eval-medal" id="endMedal">🏫</div>
+                <div class="end-eval-title" id="endEvalTitle">——</div>
+                <div class="end-eval-stats" id="endEvalStats"></div>
+            </div>
+
+            <!-- 三列数据卡片 -->
+            <div class="end-cards">
+                <div class="end-card">
+                    <div class="end-card-label">存活学生</div>
+                    <div class="end-card-value" id="endAlive">—</div>
+                    <div class="end-card-sub" id="endAliveRate">—</div>
+                </div>
+                <div class="end-card">
+                    <div class="end-card-label">重点录取率</div>
+                    <div class="end-card-value" id="endKeyRate">—</div>
+                    <div class="end-card-sub">985 / 211 / 双一流</div>
+                </div>
+                <div class="end-card">
+                    <div class="end-card-label">总工资</div>
+                    <div class="end-card-value" id="endSalary">—</div>
+                    <div class="end-card-sub" id="endHealth">—</div>
+                </div>
+            </div>
+
+            <!-- 缅怀区 -->
+            <div class="end-memorial-section" id="endMemorialSection" style="display: none;">
+                <div class="end-section-title">💐 缅怀</div>
+                <div id="endMemorialList"></div>
+            </div>
+
+            <!-- 大学录取分布 -->
+            <div class="end-tier-section" id="endTierSection">
+                <div class="end-section-title">高考录取分布</div>
+                <div id="endTierBars"></div>
+            </div>
+
+            <!-- 学生录取名单 -->
+            <div class="end-students-section" id="endStudentsSection">
+                <div class="end-section-title">学生录取名单</div>
+                <div id="endStudentsList"></div>
+            </div>
+
+            <button class="end-return-btn" id="returnMenuBtn">返 回 主 菜 单</button>
+        </div>
+    </div>
+
+    <!-- 规则弹窗 -->
+    <div id="rulesModal">
+        <div class="rules-panel">
+            <button class="rules-close" id="rulesCloseBtn">✕</button>
+            <div class="rules-title">📋 游戏规则说明</div>
+            <div class="rules-grid">
+                <div class="rules-card">
+                    <div class="rules-card-title">📅 游戏周期</div>
+                    <div class="rules-card-body">
+                        共 <span class="hi">6学期 × 10周 = 60周</span>，每学期期中、期末各一次<span class="warn">联考</span>，第60周举行<span class="danger">高考</span>。每4周发一次月薪。
+                    </div>
+                </div>
+                <div class="rules-card">
+                    <div class="rules-card-title">📊 学生属性条</div>
+                    <div class="rules-card-body">
+                        <span style="color:#3498db">■</span> <span class="hi">蓝条</span> = 学习能力上限，越高成绩越好。<br>
+                        <span style="color:#e74c3c">■</span> <span class="hi">红条</span> = 当前精力值，精力不足影响发挥。
+                    </div>
+                </div>
+                <div class="rules-card">
+                    <div class="rules-card-title">💬 好感度系统</div>
+                    <div class="rules-card-body">
+                        六级关系：<span class="hi">普通→较好→朋友→恋人</span> / <span class="danger">不满→仇恨</span>。邻座影响最强。<span class="good">朋友</span>加精力，<span class="danger">仇恨</span>减精力。
+                    </div>
+                </div>
+                <div class="rules-card">
+                    <div class="rules-card-title">⚠️ 失败条件</div>
+                    <div class="rules-card-body">
+                        班主任<span class="danger">血量归零</span>或<span class="danger">全班劝退</span>即失败。精力低于20每周扣血5点。购买药品可恢复血量。
+                    </div>
+                </div>
+                <div class="rules-card">
+                    <div class="rules-card-title">🛠️ 可用操作</div>
+                    <div class="rules-card-body">
+                        <span class="hi">约谈</span>提积极性，<span class="hi">请吃饭</span>恢复精力，<span class="hi">随机重排</span>打散关系，<span class="hi">组织活动</span>提振全班，<span class="hi">挑拨离间</span>破坏关系（高风险）。
+                    </div>
+                </div>
+                <div class="rules-card">
+                    <div class="rules-card-title">🎓 胜利目标</div>
+                    <div class="rules-card-body">
+                        高考结束后综合评定。送越多学生进 <span class="hi">985/211/双一流</span>，评价越高，最高荣获特级教师称号。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 请假申请弹窗 -->
+    <div id="leaveModal">
+        <div class="modal-content">
+            <h3>处理请假申请</h3>
+            <div class="leave-auto-setting">
+                <label class="setting-label">自动处理：</label>
+                <div class="radio-group">
+                    <label class="radio-item">
+                        <input type="radio" name="leaveAutoHandle" value="manual" checked>
+                        <span>始终自己决定</span>
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="leaveAutoHandle" value="approve">
+                        <span>始终同意</span>
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="leaveAutoHandle" value="reject">
+                        <span>始终拒绝</span>
+                    </label>
+                </div>
+            </div>
+            <div id="leaveRequestsList"></div>
+            <div class="modal-buttons">
+                <button class="btn" id="closeLeaveBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 挑拨离间弹窗 -->
+    <div id="instigateModal">
+        <div class="modal-content">
+            <h3>选择第二个学生</h3>
+            <p id="instigateText">请选择要挑拨的第二个学生</p>
+            <div class="modal-buttons">
+                <button class="btn" id="cancelInstigateBtn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 交换座位弹窗 -->
+    <div id="swapModal">
+        <div class="modal-content">
+            <h3>选择交换对象</h3>
+            <p id="swapText">请选择要交换座位的学生</p>
+            <div class="modal-buttons">
+                <button class="btn" id="cancelSwapBtn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 考试记录详情弹窗 -->
+    <div id="examDetailModal">
+        <div class="modal-content exam-detail">
+            <h3 id="examDetailTitle">考试详情</h3>
+            <div id="examDetailContent"></div>
+            <div class="modal-buttons">
+                <button class="btn" id="closeExamDetailBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知弹窗 -->
+    <div id="notificationModal">
+        <div class="modal-content notification">
+            <div id="notificationIcon"></div>
+            <h3 id="notificationTitle">操作结果</h3>
+            <p id="notificationMessage"></p>
+            <div class="notification-queue-info" id="notificationQueueInfo" style="display: none;">
+                剩余 <span id="notificationQueueCount">0</span> 条通知
+            </div>
+            <div class="modal-buttons">
+                <button class="btn" id="closeNotificationBtn">确定 (Space)</button>
+                <button class="btn" id="confirmAllNotificationsBtn" style="display: none;">确认全部</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 学生死亡通知弹窗 -->
+    <div id="studentDeathModal">
+        <div class="modal-content notification">
+            <div id="deathIcon">💀</div>
+            <h3 id="deathTitle">学生离世</h3>
+            <p id="deathMessage">学生因精力耗尽而不幸离世！</p>
+            <div class="modal-buttons">
+                <button class="btn" id="closeDeathBtn">确定 (Space)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 随机事件弹窗 -->
+    <div id="randomEventModal">
+        <div class="modal-content event">
+            <div id="randomEventIcon" class="event-icon">📢</div>
+            <h3 id="randomEventTitle">随机事件</h3>
+            <p id="randomEventMessage"></p>
+            <div class="modal-buttons" id="randomEventButtons"></div>
+        </div>
+    </div>
+
+    <!-- 劝退确认弹窗 -->
+    <div id="expelConfirmModal">
+        <div class="modal-content notification">
+            <div id="expelConfirmIcon"></div>
+            <h3 id="expelConfirmTitle">确认劝退</h3>
+            <p id="expelConfirmMessage">确定要劝退该学生吗？</p>
+            <div class="modal-buttons">
+                <button class="btn btn-danger" id="cancelExpelBtn">取消</button>
+                <button class="btn" id="confirmExpelBtn">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 考试/竞赛结果弹窗 -->
+    <div id="examResultModal">
+        <div class="modal-content notification">
+            <div id="examResultIcon"></div>
+            <h3 id="examResultTitle">考试结果</h3>
+            <pre id="examResultMessage"></pre>
+            <div class="modal-buttons">
+                <button class="btn" id="closeExamResultBtn">确定 (Space)</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script src="sports_day.js"></script>
+</body>
 </html>
