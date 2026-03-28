@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校运会动态效果演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #fff;
+        }
+
+        h1 {
+            color: #e8c76a;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .demo-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            max-width: 1200px;
+        }
+
+        .demo-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(232, 199, 106, 0.3);
+        }
+
+        .demo-title {
+            color: #e8c76a;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        canvas {
+            border: 2px solid #e8c76a;
+            border-radius: 8px;
+            background: #0d1117;
+            display: block;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #e8c76a;
+            color: #0d1117;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #ffd700;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.stop {
+            background: #e74c3c;
+            color: white;
+        }
+
+        button.stop:hover {
+            background: #c0392b;
+        }
+
+        .info {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 0.85em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏃‍♂️ 校运会动态效果演示</h1>
+    
+    <div class="demo-container">
+        <!-- 演示1: 简单人物跑步 -->
+        <div class="demo-section">
+            <div class="demo-title">🏃 简单人物跑步动画</div>
+            <canvas id="runCanvas" width="400" height="300"></canvas>
+            <div class="controls">
+                <button onclick="startRunning()">开始跑步</button>
+                <button class="stop" onclick="stopRunning()">停止</button>
+            </div>
+            <div class="info">使用基础图形绘制人物，通过关节旋转实现跑步动作</div>
+        </div>
+
+        <!-- 演示2: 短跑比赛 -->
+        <div class="demo-section">
+            <div class="demo-title">🏆 短跑比赛</div>
+            <canvas id="raceCanvas" width="400" height="300"></canvas>
+            <div class="controls">
+                <button onclick="startRace()">开始比赛</button>
+                <button class="stop" onclick="resetRace()">重置</button>
+            </div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-color" style="background:#3498db"></div>男生</div>
+                <div class="legend-item"><div class="legend-color" style="background:#e91e63"></div>女生</div>
+            </div>
+            <div class="info">多个角色同时比赛，随机速度和体力消耗</div>
+        </div>
+
+        <!-- 演示3: 接力赛 -->
+        <div class="demo-section">
+            <div class="demo-title">🤝 接力赛</div>
+            <canvas id="relayCanvas" width="400" height="300"></canvas>
+            <div class="controls">
+                <button onclick="startRelay()">开始接力</button>
+                <button class="stop" onclick="resetRelay()">重置</button>
+            </div>
+            <div class="info">四名队员接力跑，传递接力棒</div>
+        </div>
+
+        <!-- 演示4: 跳远 -->
+        <div class="demo-section">
+            <div class="demo-title">🦘 跳远</div>
+            <canvas id="jumpCanvas" width="400" height="300"></canvas>
+            <div class="controls">
+                <button onclick="startJump()">跳跃</button>
+                <button class="stop" onclick="resetJump()">重置</button>
+            </div>
+            <div class="info">助跑、起跳、落地三阶段动画</div>
+        </div>
+
+        <!-- 演示5: 骑背赛跑 -->
+        <div class="demo-section">
+            <div class="demo-title">🤺 骑背赛跑</div>
+            <canvas id="piggybackCanvas" width="400" height="300"></canvas>
+            <div class="controls">
+                <button onclick="startPiggyback()">开始赛跑</button>
+                <button class="stop" onclick="resetPiggyback()">重置</button>
+            </div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-color" style="background:#3498db"></div>载体A</div>
+                <div class="legend-item"><div class="legend-color" style="background:#e91e63"></div>载体B</div>
+                <div class="legend-item"><div class="legend-color" style="background:#f39c12"></div>骑乘者</div>
+            </div>
+            <div class="info">一名学生骑在另一名学生背上比赛，双人协作</div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // 简单人物跑步动画
+        // ============================================================================
+        const runCanvas = document.getElementById('runCanvas');
+        const runCtx = runCanvas.getContext('2d');
+        let running = false;
+        let runAnimationFrame;
+        let runFrame = 0;
+
+        // 绘制简单人物（优化版）
+        function drawSimplePerson(ctx, x, y, scale, frame, color, isJumping = false) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+
+            // 身体颜色
+            ctx.fillStyle = color;
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+
+            // 计算运动角度（使用更平滑的正弦波）
+            const cycle = frame * 0.12;
+            const legAngle = Math.sin(cycle) * 0.35;  // 减小腿部摆动幅度
+            const armAngle = Math.sin(cycle + Math.PI) * 0.25;  // 手臂与腿部反向摆动
+
+            // 身体前倾（跑步时身体自然前倾）
+            const bodyTilt = isJumping ? 0.1 : 0.05;
+
+            // 头部
+            ctx.save();
+            ctx.translate(0, -25);
+            ctx.rotate(bodyTilt);
+            ctx.beginPath();
+            ctx.arc(0, 0, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // 面部表情（简单）
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(-3, -2, 1.5, 0, Math.PI * 2);  // 左眼
+            ctx.arc(3, -2, 1.5, 0, Math.PI * 2);   // 右眼
+            ctx.fill();
+            ctx.restore();
+
+            // 身体（略微前倾）
+            ctx.save();
+            ctx.translate(0, -5);
+            ctx.rotate(bodyTilt);
+            ctx.fillRect(-7, -15, 14, 25);
+            ctx.strokeRect(-7, -15, 14, 25);
+            ctx.restore();
+
+            // 左臂（前摆）
+            ctx.save();
+            ctx.translate(-6, -10);
+            ctx.rotate(armAngle - 0.3);  // 手臂自然前摆
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            // 上臂
+            const elbowX = -2 * Math.cos(armAngle - 0.3);
+            const elbowY = 12 * Math.cos(armAngle - 0.3);
+            ctx.lineTo(elbowX, elbowY);
+            // 前臂
+            const handX = elbowX - 2 * Math.sin(armAngle * 0.5);
+            const handY = elbowY + 13;
+            ctx.lineTo(handX, handY);
+            ctx.stroke();
+            ctx.restore();
+
+            // 右臂（后摆）
+            ctx.save();
+            ctx.translate(6, -10);
+            ctx.rotate(-armAngle + 0.3);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            const elbowX2 = 2 * Math.cos(-armAngle + 0.3);
+            const elbowY2 = 12 * Math.cos(-armAngle + 0.3);
+            ctx.lineTo(elbowX2, elbowY2);
+            const handX2 = elbowX2 + 2 * Math.sin(-armAngle * 0.5);
+            const handY2 = elbowY2 + 13;
+            ctx.lineTo(handX2, handY2);
+            ctx.stroke();
+            ctx.restore();
+
+            // 左腿
+            ctx.save();
+            ctx.translate(-4, 10);
+            ctx.rotate(isJumping ? -0.2 : legAngle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            // 大腿
+            const kneeX = -2 * Math.cos(legAngle);
+            const kneeY = 14;
+            ctx.lineTo(kneeX, kneeY);
+            // 小腿（有膝关节弯曲）
+            const ankleX = isJumping ? kneeX - 2 : kneeX + (Math.sin(legAngle + Math.PI) * 3);
+            const ankleY = isJumping ? kneeY - 10 : kneeY + 11;
+            ctx.lineTo(ankleX, ankleY);
+            ctx.stroke();
+            ctx.restore();
+
+            // 右腿
+            ctx.save();
+            ctx.translate(4, 10);
+            ctx.rotate(isJumping ? 0.4 : -legAngle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            const kneeX2 = 2 * Math.cos(-legAngle);
+            const kneeY2 = 14;
+            ctx.lineTo(kneeX2, kneeY2);
+            const ankleX2 = isJumping ? kneeX2 - 3 : kneeX2 - (Math.sin(-legAngle + Math.PI) * 3);
+            const ankleY2 = isJumping ? kneeY2 - 8 : kneeY2 + 11;
+            ctx.lineTo(ankleX2, ankleY2);
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.restore();
+        }
+
+        function drawRunningTrack(ctx, width, height) {
+            // 跑道
+            ctx.fillStyle = '#c49a6c';
+            ctx.fillRect(0, height - 80, width, 80);
+
+            // 跑道线
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([20, 10]);
+            ctx.beginPath();
+            ctx.moveTo(0, height - 40);
+            ctx.lineTo(width, height - 40);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function animateRunning() {
+            runCtx.clearRect(0, 0, runCanvas.width, runCanvas.height);
+            
+            // 绘制跑道
+            drawRunningTrack(runCtx, runCanvas.width, runCanvas.height);
+
+            // 绘制人物
+            const playerX = 150;
+            const playerY = runCanvas.height - 80;
+            
+            drawSimplePerson(runCtx, playerX, playerY, 1.5, runFrame, '#3498db');
+
+            runFrame++;
+            runAnimationFrame = requestAnimationFrame(animateRunning);
+        }
+
+        function startRunning() {
+            if (running) return;
+            running = true;
+            runFrame = 0;
+            animateRunning();
+        }
+
+        function stopRunning() {
+            running = false;
+            cancelAnimationFrame(runAnimationFrame);
+        }
+
+        // 初始绘制
+        drawRunningTrack(runCtx, runCanvas.width, runCanvas.height);
+        drawSimplePerson(runCtx, 150, runCanvas.height - 80, 1.5, 0, '#3498db');
+
+        // ============================================================================
+        // 短跑比赛
+        // ============================================================================
+        const raceCanvas = document.getElementById('raceCanvas');
+        const raceCtx = raceCanvas.getContext('2d');
+        let racing = false;
+        let raceAnimationFrame;
+
+        class Racer {
+            constructor(x, y, color, name) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.name = name;
+                this.speed = 0;
+                this.baseSpeed = 0.5 + Math.random() * 0.5;
+                this.stamina = 100;
+                this.frame = Math.random() * 10;
+                this.finished = false;
+                this.finishTime = 0;
+            }
+
+            update() {
+                if (this.finished) return;
+
+                // 体力影响速度
+                this.speed = this.baseSpeed * (0.5 + this.stamina / 200);
+                
+                // 随机加速（爆发）
+                if (Math.random() < 0.02) {
+                    this.speed *= 1.3;
+                }
+
+                this.x += this.speed;
+                this.stamina -= 0.1;
+                this.frame += 0.2;
+
+                // 检查是否完成
+                if (this.x > raceCanvas.width - 50) {
+                    this.finished = true;
+                    this.finishTime = Date.now();
+                }
+            }
+
+            draw(ctx) {
+                drawSimplePerson(ctx, this.x, this.y, 1.2, this.frame, this.color);
+                
+                // 绘制名字
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.name, this.x, this.y - 40);
+
+                // 绘制体力条
+                ctx.fillStyle = '#333';
+                ctx.fillRect(this.x - 20, this.y - 50, 40, 5);
+                ctx.fillStyle = this.stamina > 50 ? '#2ecc71' : this.stamina > 25 ? '#f39c12' : '#e74c3c';
+                ctx.fillRect(this.x - 20, this.y - 50, 40 * (this.stamina / 100), 5);
+            }
+        }
+
+        let racers = [];
+
+        function initRace() {
+            racers = [
+                new Racer(30, 220, '#3498db', '小明'),
+                new Racer(30, 180, '#e91e63', '小红'),
+                new Racer(30, 140, '#3498db', '小李'),
+                new Racer(30, 100, '#e91e63', '小美')
+            ];
+        }
+
+        function drawRaceTrack(ctx, width, height) {
+            // 跑道背景
+            ctx.fillStyle = '#c49a6c';
+            ctx.fillRect(0, 80, width, 170);
+
+            // 跑道分隔线
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            for (let y = 120; y < 240; y += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            // 终点线
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            ctx.moveTo(width - 50, 80);
+            ctx.lineTo(width - 50, 250);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 终点标记
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('终点', width - 50, 70);
+        }
+
+        function animateRace() {
+            raceCtx.clearRect(0, 0, raceCanvas.width, raceCanvas.height);
+            
+            drawRaceTrack(raceCtx, raceCanvas.width, raceCanvas.height);
+
+            let allFinished = true;
+            racers.forEach(racer => {
+                racer.update();
+                racer.draw(raceCtx);
+                if (!racer.finished) allFinished = false;
+            });
+
+            if (allFinished) {
+                racing = false;
+                const winner = racers.reduce((a, b) => a.finishTime < b.finishTime ? a : b);
+                setTimeout(() => {
+                    alert(`🏆 ${winner.name} 获胜！`);
+                }, 100);
+            } else {
+                raceAnimationFrame = requestAnimationFrame(animateRace);
+            }
+        }
+
+        function startRace() {
+            if (racing) return;
+            initRace();
+            racing = true;
+            animateRace();
+        }
+
+        function resetRace() {
+            racing = false;
+            cancelAnimationFrame(raceAnimationFrame);
+            initRace();
+            raceCtx.clearRect(0, 0, raceCanvas.width, raceCanvas.height);
+            drawRaceTrack(raceCtx, raceCanvas.width, raceCanvas.height);
+            racers.forEach(racer => racer.draw(raceCtx));
+        }
+
+        // 初始化比赛
+        initRace();
+        resetRace();
+
+        // ============================================================================
+        // 接力赛
+        // ============================================================================
+        const relayCanvas = document.getElementById('relayCanvas');
+        const relayCtx = relayCanvas.getContext('2d');
+        let relaying = false;
+        let relayAnimationFrame;
+
+        class RelayTeam {
+            constructor(x, y, color, name) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.name = name;
+                this.runners = [
+                    { x: 0, frame: 0, running: false, finished: false },
+                    { x: 0, frame: 0, running: false, finished: false },
+                    { x: 0, frame: 0, running: false, finished: false },
+                    { x: 0, frame: 0, running: false, finished: false }
+                ];
+                this.currentRunner = 0;
+                this.batonPosition = 0;
+                this.hasBaton = [true, false, false, false];
+                this.finished = false;
+            }
+
+            update() {
+                if (this.finished || this.currentRunner >= 4) return;
+
+                const runner = this.runners[this.currentRunner];
+
+                if (!runner.running) {
+                    runner.running = true;
+                    runner.x = this.currentRunner * 100;
+                }
+
+                // 跑动
+                runner.x += 0.8;
+                runner.frame += 0.15;
+
+                // 接力
+                if (runner.x > (this.currentRunner + 1) * 100 - 30 && this.currentRunner < 3) {
+                    const nextRunner = this.runners[this.currentRunner + 1];
+                    if (!nextRunner.running) {
+                        this.hasBaton[this.currentRunner] = false;
+                        this.hasBaton[this.currentRunner + 1] = true;
+                        this.currentRunner++;
+                    }
+                }
+
+                // 完成
+                if (this.currentRunner === 3 && runner.x > relayCanvas.width - 50) {
+                    runner.finished = true;
+                    this.finished = true;
+                }
+            }
+
+            draw(ctx) {
+                // 绘制接力棒位置标记
+                for (let i = 1; i < 4; i++) {
+                    ctx.fillStyle = 'rgba(232, 199, 106, 0.3)';
+                    ctx.fillRect(i * 100 - 20, this.y - 30, 40, 60);
+                    ctx.strokeStyle = '#e8c76a';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(i * 100 - 20, this.y - 30, 40, 60);
+                }
+
+                // 绘制每个队员
+                this.runners.forEach((runner, index) => {
+                    if (runner.running || index <= this.currentRunner) {
+                        drawSimplePerson(ctx, this.x + runner.x, this.y, 1.1, runner.frame, this.color);
+
+                        // 绘制接力棒
+                        if (this.hasBaton[index]) {
+                            ctx.save();
+                            ctx.translate(this.x + runner.x, this.y);
+                            ctx.rotate(-0.3);
+                            ctx.fillStyle = '#e8c76a';
+                            ctx.fillRect(-3, -30, 6, 15);
+                            ctx.restore();
+                        }
+
+                        // 绘制队员编号
+                        ctx.fillStyle = '#fff';
+                        ctx.font = 'bold 10px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(index + 1, this.x + runner.x, this.y - 45);
+                    }
+                });
+
+                // 绘制队名
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(this.name, 10, this.y);
+            }
+        }
+
+        let teams = [];
+
+        function initRelay() {
+            teams = [
+                new RelayTeam(30, 200, '#3498db', '蓝队'),
+                new RelayTeam(30, 140, '#e91e63', '红队')
+            ];
+        }
+
+        function drawRelayTrack(ctx, width, height) {
+            // 跑道
+            ctx.fillStyle = '#c49a6c';
+            ctx.fillRect(0, 100, width, 140);
+
+            // 分隔线
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 170);
+            ctx.lineTo(width, 170);
+            ctx.stroke();
+
+            // 接力区标记
+            for (let i = 1; i < 4; i++) {
+                ctx.strokeStyle = '#e8c76a';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(i * 100, 100);
+                ctx.lineTo(i * 100, 240);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 终点线
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            ctx.moveTo(width - 50, 100);
+            ctx.lineTo(width - 50, 240);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function animateRelay() {
+            relayCtx.clearRect(0, 0, relayCanvas.width, relayCanvas.height);
+            
+            drawRelayTrack(relayCtx, relayCanvas.width, relayCanvas.height);
+
+            let allFinished = true;
+            teams.forEach(team => {
+                team.update();
+                team.draw(relayCtx);
+                if (!team.finished) allFinished = false;
+            });
+
+            if (allFinished) {
+                relaying = false;
+                const winner = teams.reduce((a, b) => {
+                    const aTime = a.runners[3].x;
+                    const bTime = b.runners[3].x;
+                    return aTime > bTime ? a : b;
+                });
+                setTimeout(() => {
+                    alert(`🏆 ${winner.name} 获胜！`);
+                }, 100);
+            } else {
+                relayAnimationFrame = requestAnimationFrame(animateRelay);
+            }
+        }
+
+        function startRelay() {
+            if (relaying) return;
+            initRelay();
+            relaying = true;
+            animateRelay();
+        }
+
+        function resetRelay() {
+            relaying = false;
+            cancelAnimationFrame(relayAnimationFrame);
+            initRelay();
+            relayCtx.clearRect(0, 0, relayCanvas.width, relayCanvas.height);
+            drawRelayTrack(relayCtx, relayCanvas.width, relayCanvas.height);
+            teams.forEach(team => team.draw(relayCtx));
+        }
+
+        // 初始化接力
+        initRelay();
+        resetRelay();
+
+        // ============================================================================
+        // 跳远
+        // ============================================================================
+        const jumpCanvas = document.getElementById('jumpCanvas');
+        const jumpCtx = jumpCanvas.getContext('2d');
+        let jumping = false;
+        let jumpAnimationFrame;
+
+        const jumper = {
+            x: 50,
+            y: 220,
+            vy: 0,
+            frame: 0,
+            phase: 'runway',  // runway, takeoff, jump, land
+            jumpPower: 0,
+            landingX: 0
+        };
+
+        function drawJumpTrack(ctx, width, height) {
+            // 助跑道
+            ctx.fillStyle = '#c49a6c';
+            ctx.fillRect(0, 180, 200, 80);
+
+            // 起跳板
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(200, 180, 10, 80);
+
+            // 沙坑
+            ctx.fillStyle = '#f5deb3';
+            ctx.fillRect(210, 180, 190, 80);
+
+            // 标尺
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Arial';
+            for (let m = 0; m <= 10; m++) {
+                const x = 200 + m * 20;
+                ctx.fillText(`${m}m`, x, 175);
+                ctx.beginPath();
+                ctx.moveTo(x, 180);
+                ctx.lineTo(x, 185);
+                ctx.stroke();
+            }
+        }
+
+        function animateJump() {
+            jumpCtx.clearRect(0, 0, jumpCanvas.width, jumpCanvas.height);
+            
+            drawJumpTrack(jumpCtx, jumpCanvas.width, jumpCanvas.height);
+
+            switch (jumper.phase) {
+                case 'runway':
+                    jumper.x += 1.5;
+                    jumper.frame += 0.2;
+                    if (jumper.x >= 180) {
+                        jumper.phase = 'takeoff';
+                        jumper.jumpPower = 12 + Math.random() * 3;
+                        jumper.vy = -jumper.jumpPower;
+                    }
+                    drawSimplePerson(jumpCtx, jumper.x, jumper.y, 1.3, jumper.frame, '#3498db');
+                    break;
+
+                case 'takeoff':
+                    jumper.x += 2;
+                    jumper.y += jumper.vy;
+                    jumper.vy += 0.5;
+                    jumper.frame += 0.15;
+                    
+                    if (jumper.vy >= 0) {
+                        jumper.phase = 'jump';
+                    }
+                    drawSimplePerson(jumpCtx, jumper.x, jumper.y, 1.3, jumper.frame, '#3498db', true);
+                    break;
+
+                case 'jump':
+                    jumper.x += 2.5;
+                    jumper.y += jumper.vy;
+                    jumper.vy += 0.5;
+                    jumper.frame += 0.1;
+
+                    if (jumper.y >= 220) {
+                        jumper.y = 220;
+                        jumper.phase = 'land';
+                        jumper.landingX = jumper.x;
+                    }
+                    drawSimplePerson(jumpCtx, jumper.x, jumper.y, 1.3, jumper.frame, '#3498db', true);
+                    break;
+
+                case 'land':
+                    jumper.frame = 0;
+                    drawSimplePerson(jumpCtx, jumper.x, jumper.y, 1.3, 0, '#3498db');
+                    
+                    // 显示成绩
+                    const distance = ((jumper.landingX - 200) / 20).toFixed(2);
+                    jumpCtx.fillStyle = '#e8c76a';
+                    jumpCtx.font = 'bold 20px Arial';
+                    jumpCtx.textAlign = 'center';
+                    jumpCtx.fillText(`成绩: ${distance}米`, jumpCanvas.width / 2, 50);
+                    
+                    jumping = false;
+                    return;
+            }
+
+            jumpAnimationFrame = requestAnimationFrame(animateJump);
+        }
+
+        function startJump() {
+            if (jumping) return;
+            jumper.x = 50;
+            jumper.y = 220;
+            jumper.vy = 0;
+            jumper.frame = 0;
+            jumper.phase = 'runway';
+            jumping = true;
+            animateJump();
+        }
+
+        function resetJump() {
+            jumping = false;
+            cancelAnimationFrame(jumpAnimationFrame);
+            jumper.x = 50;
+            jumper.y = 220;
+            jumper.vy = 0;
+            jumper.frame = 0;
+            jumper.phase = 'runway';
+            jumpCtx.clearRect(0, 0, jumpCanvas.width, jumpCanvas.height);
+            drawJumpTrack(jumpCtx, jumpCanvas.width, jumpCanvas.height);
+            drawSimplePerson(jumpCtx, jumper.x, jumper.y, 1.3, 0, '#3498db');
+        }
+
+        // 初始化跳远
+        drawJumpTrack(jumpCtx, jumpCanvas.width, jumpCanvas.height);
+        drawSimplePerson(jumpCtx, jumper.x, jumper.y, 1.3, 0, '#3498db');
+
+        // ============================================================================
+        // 骑背赛跑
+        // ============================================================================
+        const piggybackCanvas = document.getElementById('piggybackCanvas');
+        const piggybackCtx = piggybackCanvas.getContext('2d');
+        let piggybackRacing = false;
+        let piggybackAnimationFrame;
+
+        // 绘制骑背人物组合（优化版）
+        function drawPiggybackPair(ctx, x, y, carrierScale, riderScale, carrierFrame, carrierColor, riderColor) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // 绘制载体（下面的人）
+            drawSimplePerson(ctx, 0, 0, carrierScale, carrierFrame, carrierColor);
+
+            // 骑乘者位置（紧贴在载体背部）
+            const riderX = 2;
+            const riderY = -30;
+            const riderFrame = carrierFrame * 0.7;  // 骑乘者动作稍微慢一点
+
+            // 骑乘者的手臂和腿
+            ctx.save();
+            ctx.translate(riderX, riderY);
+            ctx.scale(riderScale, riderScale);
+
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.fillStyle = riderColor;
+
+            // 身体前倾（紧贴载体）
+            const bodyTilt = 0.15;
+
+            // 头部
+            ctx.save();
+            ctx.translate(0, -22);
+            ctx.rotate(bodyTilt);
+            ctx.beginPath();
+            ctx.arc(0, 0, 9, 0, Math.PI * 2);  // 头部稍微小一点
+            ctx.fill();
+            ctx.stroke();
+
+            // 面部表情
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(-2, -2, 1.2, 0, Math.PI * 2);
+            ctx.arc(2, -2, 1.2, 0, Math.PI * 2);
+            ctx.fill();
+            // 微笑
+            ctx.beginPath();
+            ctx.arc(0, 2, 2, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.stroke();
+            ctx.restore();
+
+            // 身体（紧贴载体）
+            ctx.save();
+            ctx.translate(0, -5);
+            ctx.rotate(bodyTilt);
+            ctx.fillRect(-6, -13, 12, 22);  // 身体稍微窄一点
+            ctx.strokeRect(-6, -13, 12, 22);
+            ctx.restore();
+
+            // 左臂（从后面抓住载体肩膀）
+            ctx.save();
+            ctx.translate(-5, -10);
+            ctx.rotate(0.4 + Math.sin(carrierFrame * 0.12) * 0.1);  // 围住载体肩膀
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(3, 8);
+            ctx.lineTo(6, 15);  // 手抓住载体肩膀位置
+            ctx.stroke();
+
+            // 手（抓握状）
+            ctx.fillStyle = riderColor;
+            ctx.beginPath();
+            ctx.arc(6, 15, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // 右臂（从后面抓住载体肩膀）
+            ctx.save();
+            ctx.translate(5, -10);
+            ctx.rotate(-0.4 - Math.sin(carrierFrame * 0.12) * 0.1);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-3, 8);
+            ctx.lineTo(-6, 15);  // 手抓住载体肩膀位置
+            ctx.stroke();
+
+            // 手（抓握状）
+            ctx.fillStyle = riderColor;
+            ctx.beginPath();
+            ctx.arc(-6, 15, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // 左腿（盘在载体腰部）
+            ctx.save();
+            ctx.translate(-3, 9);
+            ctx.rotate(-0.5 + Math.sin(carrierFrame * 0.12 + Math.PI) * 0.08);  // 腿盘住载体腰
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(4, 8);  // 大腿向外
+            ctx.lineTo(6, 16);  // 小腿向下，盘住载体
+            ctx.stroke();
+
+            // 脚
+            ctx.fillStyle = riderColor;
+            ctx.beginPath();
+            ctx.ellipse(6, 16, 4, 2, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // 右腿（盘在载体腰部）
+            ctx.save();
+            ctx.translate(3, 9);
+            ctx.rotate(0.5 - Math.sin(carrierFrame * 0.12 + Math.PI) * 0.08);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-4, 8);
+            ctx.lineTo(-6, 16);
+            ctx.stroke();
+
+            // 脚
+            ctx.fillStyle = riderColor;
+            ctx.beginPath();
+            ctx.ellipse(-6, 16, 4, 2, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.restore();
+
+            ctx.restore();
+        }
+
+        class PiggybackTeam {
+            constructor(x, y, carrierColor, name) {
+                this.x = x;
+                this.y = y;
+                this.carrierColor = carrierColor;
+                this.riderColor = '#f39c12';  // 骑乘者统一为橙色
+                this.name = name;
+                this.speed = 0;
+                this.baseSpeed = 0.6 + Math.random() * 0.5;
+                this.stamina = 100;
+                this.frame = Math.random() * 10;
+                this.finished = false;
+                this.finishTime = 0;
+                this.synergy = 0.8 + Math.random() * 0.3;  // 协作度
+            }
+
+            update() {
+                if (this.finished) return;
+
+                // 协作度影响速度
+                this.speed = this.baseSpeed * this.synergy * (0.5 + this.stamina / 200);
+
+                // 体力消耗更快（因为是两人）
+                this.stamina -= 0.15;
+
+                // 随机加速（协作爆发）
+                if (Math.random() < 0.03) {
+                    this.speed *= 1.4;
+                    this.synergy = Math.min(1.2, this.synergy + 0.05);
+                }
+
+                this.x += this.speed;
+                this.frame += 0.15;
+
+                // 检查是否完成
+                if (this.x > piggybackCanvas.width - 50) {
+                    this.finished = true;
+                    this.finishTime = Date.now();
+                }
+            }
+
+            draw(ctx) {
+                drawPiggybackPair(ctx, this.x, this.y, 1.3, 0.9, this.frame, this.carrierColor, this.riderColor);
+
+                // 绘制队伍名字
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.name, this.x, this.y - 55);
+
+                // 绘制协作度
+                ctx.fillStyle = '#e8c76a';
+                ctx.font = '10px Arial';
+                ctx.fillText(`协作: ${(this.synergy * 100).toFixed(0)}%`, this.x, this.y + 35);
+
+                // 绘制体力条
+                ctx.fillStyle = '#333';
+                ctx.fillRect(this.x - 25, this.y - 65, 50, 5);
+                ctx.fillStyle = this.stamina > 50 ? '#2ecc71' : this.stamina > 25 ? '#f39c12' : '#e74c3c';
+                ctx.fillRect(this.x - 25, this.y - 65, 50 * (this.stamina / 100), 5);
+            }
+        }
+
+        let piggybackTeams = [];
+
+        function initPiggyback() {
+            piggybackTeams = [
+                new PiggybackTeam(30, 200, '#3498db', '小明队'),
+                new PiggybackTeam(30, 130, '#e91e63', '小红队')
+            ];
+        }
+
+        function drawPiggybackTrack(ctx, width, height) {
+            // 跑道背景
+            ctx.fillStyle = '#c49a6c';
+            ctx.fillRect(0, 80, width, 150);
+
+            // 跑道分隔线
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 165);
+            ctx.lineTo(width, 165);
+            ctx.stroke();
+
+            // 装饰图案
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            for (let x = 0; x < width; x += 40) {
+                ctx.beginPath();
+                ctx.arc(x, 122, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + 20, 208, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 终点线
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            ctx.moveTo(width - 50, 80);
+            ctx.lineTo(width - 50, 230);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 终点标记
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('终点', width - 50, 70);
+        }
+
+        function animatePiggyback() {
+            piggybackCtx.clearRect(0, 0, piggybackCanvas.width, piggybackCanvas.height);
+
+            drawPiggybackTrack(piggybackCtx, piggybackCanvas.width, piggybackCanvas.height);
+
+            let allFinished = true;
+            piggybackTeams.forEach(team => {
+                team.update();
+                team.draw(piggybackCtx);
+                if (!team.finished) allFinished = false;
+            });
+
+            if (allFinished) {
+                piggybackRacing = false;
+                const winner = piggybackTeams.reduce((a, b) => a.finishTime < b.finishTime ? a : b);
+                setTimeout(() => {
+                    alert(`🏆 ${winner.name} 获胜！\n协作度: ${(winner.synergy * 100).toFixed(0)}%`);
+                }, 100);
+            } else {
+                piggybackAnimationFrame = requestAnimationFrame(animatePiggyback);
+            }
+        }
+
+        function startPiggyback() {
+            if (piggybackRacing) return;
+            initPiggyback();
+            piggybackRacing = true;
+            animatePiggyback();
+        }
+
+        function resetPiggyback() {
+            piggybackRacing = false;
+            cancelAnimationFrame(piggybackAnimationFrame);
+            initPiggyback();
+            piggybackCtx.clearRect(0, 0, piggybackCanvas.width, piggybackCanvas.height);
+            drawPiggybackTrack(piggybackCtx, piggybackCanvas.width, piggybackCanvas.height);
+            piggybackTeams.forEach(team => team.draw(piggybackCtx));
+        }
+
+        // 初始化骑背赛跑
+        initPiggyback();
+        resetPiggyback();
+
+    </script>
+</body>
+</html>
